@@ -171,12 +171,17 @@ if not df.empty:
     wa = len(df[df["status"]=="warning"])
     no = len(df[df["status"]=="normal"])
     ac = len(df_analyzed[df_analyzed["anomaly_flag"]==-1]) if "anomaly_flag" in df_analyzed.columns else "—"
+    avg_health = "—"
+    if "anomaly_flag" in df_analyzed.columns:
+        summary = get_anomaly_summary(df_analyzed)
+        avg_health = round(np.mean([s["health_score"] for s in summary.values()]), 1)
+
     st.markdown(f"""<div class="metric-row">
       <div class="mc blue" ><div class="val">{m}</div> <div class="lbl">🏭 Machines</div></div>
       <div class="mc white"><div class="val">{t}</div> <div class="lbl">📊 Readings</div></div>
       <div class="mc red"  ><div class="val">{cr}</div><div class="lbl">🚨 Critical</div></div>
       <div class="mc amber"><div class="val">{wa}</div><div class="lbl">⚠️ Warnings</div></div>
-      <div class="mc green"><div class="val">{no}</div><div class="lbl">✅ Normal</div></div>
+      <div class="mc green"  ><div class="val">{avg_health}%</div> <div class="lbl">💓 Fleet Health</div></div>
       <div class="mc red"  ><div class="val">{ac}</div><div class="lbl">🤖 ML Anomalies</div></div>
     </div>""", unsafe_allow_html=True)
 
@@ -235,13 +240,13 @@ with tab2:
         cols = st.columns(len(anomaly_summary))
         for col, (machine, stats) in zip(cols, anomaly_summary.items()):
             with col:
-                rate  = stats["anomaly_rate"]
-                color = "#ff4757" if rate>20 else "#ffa502" if rate>10 else "#3fb950"
-                st.markdown(f"""<div class="mc" style="border-color:{color}">
-                  <div class="val" style="color:{color}">{rate}%</div>
-                  <div class="lbl">{machine}</div>
+                h_score = stats["health_score"]
+                h_color = "#3fb950" if h_score > 80 else "#ffa502" if h_score > 50 else "#ff4757"
+                st.markdown(f"""<div class="mc" style="border-color:{h_color}">
+                  <div class="val" style="color:{h_color}">{h_score}%</div>
+                  <div class="lbl">{machine} Health</div>
                   <div style="font-size:0.7rem;color:#8b949e;margin-top:4px">
-                    {stats['anomalies']}/{stats['total']} anomalies
+                    {stats['anomalies']} anomalies detected
                   </div></div>""", unsafe_allow_html=True)
 
         st.markdown('<div class="sec-header">🎯 Anomaly Scatter — Temperature vs Vibration</div>',

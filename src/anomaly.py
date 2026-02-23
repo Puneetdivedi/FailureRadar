@@ -39,15 +39,37 @@ def run_anomaly_detection(df: pd.DataFrame, contamination: float = 0.15) -> pd.D
     return result
 
 
+def calculate_health_score(anomaly_rate: float, max_score: float) -> float:
+    """
+    Calculate a 0-100 health score based on anomaly rate and severity.
+    """
+    # Base score is 100
+    score = 100.0
+    
+    # Deduct based on anomaly rate (penalty up to 60 points)
+    # 20% anomaly rate = -60 points
+    score -= min(60.0, anomaly_rate * 3.0)
+    
+    # Deduct based on max anomaly score (penalty up to 40 points)
+    # Score 0.8+ is severe
+    score -= min(40.0, max_score * 40.0)
+    
+    return max(0.0, round(score, 1))
+
+
 def get_anomaly_summary(df: pd.DataFrame) -> dict:
     if "anomaly_flag" not in df.columns:
         return {}
     summary = {}
     for machine, grp in df.groupby("machine_id"):
+        anomaly_rate = float(grp["anomaly_flag"].mean()) * 100
+        max_score = float(grp["anomaly_score"].max())
+        
         summary[machine] = {
             "total": int(len(grp)),
             "anomalies": int(grp["anomaly_flag"].sum()),
-            "anomaly_rate": round(float(grp["anomaly_flag"].mean()) * 100, 1),
-            "max_score": round(float(grp["anomaly_score"].max()), 3)
+            "anomaly_rate": round(anomaly_rate, 1),
+            "max_score": round(max_score, 3),
+            "health_score": calculate_health_score(anomaly_rate, max_score)
         }
     return summary

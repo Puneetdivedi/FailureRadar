@@ -41,6 +41,12 @@ def generate_pdf_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.Dat
             ["Warning Events",  str(len(df[df["status"] == "warning"]))],
             ["Normal Readings", str(len(df[df["status"] == "normal"]))],
         ]
+        if anomaly_df is not None and "anomaly_flag" in anomaly_df.columns:
+            from src.anomaly import get_anomaly_summary
+            anom_summary = get_anomaly_summary(anomaly_df)
+            avg_health = round(sum(s["health_score"] for s in anom_summary.values()) / len(anom_summary), 1) if anom_summary else 0
+            summary_data.append(["Fleet Health Score", f"{avg_health}%"])
+
         t = Table(summary_data, colWidths=[8*cm, 8*cm])
         t.setStyle(TableStyle([
             ("BACKGROUND",    (0,0), (-1,0), colors.HexColor("#e94560")),
@@ -110,13 +116,20 @@ def generate_docx_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.Da
         tbl.style = "Table Grid"
         tbl.rows[0].cells[0].text = "Metric"
         tbl.rows[0].cells[1].text = "Value"
+        health_data = []
+        if anomaly_df is not None and "anomaly_flag" in anomaly_df.columns:
+            from src.anomaly import get_anomaly_summary
+            anom_summary = get_anomaly_summary(anomaly_df)
+            avg_health = round(sum(s["health_score"] for s in anom_summary.values()) / len(anom_summary), 1) if anom_summary else 0
+            health_data.append(("Fleet Health Score", f"{avg_health}%"))
+
         for label, val in [
             ("Total Machines",  str(df["machine_id"].nunique())),
             ("Total Readings",  str(len(df))),
             ("Critical Events", str(len(df[df["status"] == "critical"]))),
             ("Warning Events",  str(len(df[df["status"] == "warning"]))),
             ("Normal Readings", str(len(df[df["status"] == "normal"]))),
-        ]:
+        ] + health_data:
             r = tbl.add_row().cells
             r[0].text = label
             r[1].text = val
