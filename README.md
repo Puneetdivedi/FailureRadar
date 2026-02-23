@@ -135,6 +135,7 @@ Then re-run `python src/ingest.py` to rebuild the index.
 | Vector DB | FAISS `IndexFlatIP` | Exact cosine search, no server needed |
 | LLM | Ollama (local) | 100% private, no API costs |
 | Chunking | Row-level + machine summaries | Enables both specific and aggregate queries |
+| RCA Engine | Rule-based Heuristics | Fast, explainable diagnoses of detected anomalies |
 | Temperature | 0.2 | Low = factual, deterministic diagnostics |
 
 ---
@@ -151,6 +152,7 @@ Then re-run `python src/ingest.py` to rebuild the index.
 
 ## 🚀 Possible Extensions
 
+- [x] Add Heuristic Root Cause Analysis (RCA)
 - [ ] Add LangChain for multi-step agent reasoning
 - [ ] Integrate MLflow anomaly detection model for hybrid ML+RAG
 - [ ] Export auto-generated RCA reports as PDF/DOCX

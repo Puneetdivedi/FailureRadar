@@ -10,6 +10,28 @@ from sklearn.preprocessing import StandardScaler
 FEATURES = ["temperature_C", "vibration_mm_s", "pressure_bar", "rpm", "current_A"]
 
 
+def get_root_cause(row: pd.Series) -> str:
+    """
+    Heuristic-based RCA for detected anomalies.
+    """
+    if not row["anomaly_flag"]:
+        return "Normal Operation"
+    
+    causes = []
+    if row["temperature_C"] > 85: causes.append("Critical Overheating")
+    elif row["temperature_C"] > 70: causes.append("Elevated Temperature")
+    
+    if row["vibration_mm_s"] > 8: causes.append("Severe Bearing/Shaft Vibration")
+    elif row["vibration_mm_s"] > 5: causes.append("High Mechanical Stress")
+    
+    if row["current_A"] > 15: causes.append("Electrical Overload")
+    if row["pressure_bar"] < 2: causes.append("Low Pressure Leakage")
+    
+    if not causes:
+        return "Statistical Deviation (Unclear Cause)"
+    return " & ".join(causes)
+
+
 def run_anomaly_detection(df: pd.DataFrame, contamination: float = 0.15) -> pd.DataFrame:
     result = df.copy()
     feature_cols = [c for c in FEATURES if c in df.columns]
@@ -19,6 +41,7 @@ def run_anomaly_detection(df: pd.DataFrame, contamination: float = 0.15) -> pd.D
         result["anomaly_score"] = 0.0
         result["anomaly_label"] = "insufficient_data"
         result["anomaly_flag"] = False
+        result["rca"] = "Insufficient data"
         return result
 
     scaler = StandardScaler()
@@ -31,10 +54,14 @@ def run_anomaly_detection(df: pd.DataFrame, contamination: float = 0.15) -> pd.D
     result.loc[X.index, "anomaly_score"] = np.round(-scores, 4)
     result.loc[X.index, "anomaly_flag"]  = preds == -1
     result.loc[X.index, "anomaly_label"] = ["🔴 ANOMALY" if p == -1 else "🟢 Normal" for p in preds]
+    
+    # New: Add RCA
+    result["rca"] = result.apply(get_root_cause, axis=1)
 
     result["anomaly_score"] = result["anomaly_score"].fillna(0.0)
     result["anomaly_flag"]  = result["anomaly_flag"].fillna(False)
     result["anomaly_label"] = result["anomaly_label"].fillna("🟢 Normal")
+    result["rca"]           = result["rca"].fillna("Normal Operation")
 
     return result
 

@@ -63,12 +63,12 @@ def generate_pdf_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.Dat
         story.append(Paragraph("Isolation Forest Anomaly Detection", styles["Heading2"]))
         flagged = anomaly_df[anomaly_df["anomaly_flag"] == True]
         if not flagged.empty:
-            anom_data = [["Machine", "Timestamp", "Temp C", "Vibration", "Score"]]
+            anom_data = [["Machine", "Timestamp", "Temp C", "Vibration", "Root Cause"]]
             for _, row in flagged.head(15).iterrows():
                 anom_data.append([str(row.get("machine_id","")), str(row.get("timestamp","")),
                                    str(row.get("temperature_C","")), str(row.get("vibration_mm_s","")),
-                                   str(round(row.get("anomaly_score", 0), 3))])
-            t2 = Table(anom_data, colWidths=[3.5*cm, 4.5*cm, 2.5*cm, 2.5*cm, 3*cm])
+                                   str(row.get("rca", "Unknown"))])
+            t2 = Table(anom_data, colWidths=[3.5*cm, 4.5*cm, 2*cm, 2*cm, 5*cm])
             t2.setStyle(TableStyle([
                 ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#1a1a2e")),
                 ("TEXTCOLOR",  (0,0), (-1,0), colors.white),
@@ -141,13 +141,13 @@ def generate_docx_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.Da
         if not flagged.empty:
             atbl = doc.add_table(rows=1, cols=5)
             atbl.style = "Table Grid"
-            for i, h in enumerate(["Machine", "Timestamp", "Temp C", "Vibration", "Score"]):
+            for i, h in enumerate(["Machine", "Timestamp", "Temp C", "Vibration", "Root Cause"]):
                 atbl.rows[0].cells[i].text = h
             for _, row in flagged.head(15).iterrows():
                 r = atbl.add_row().cells
                 r[0].text = str(row.get("machine_id",""));  r[1].text = str(row.get("timestamp",""))
                 r[2].text = str(row.get("temperature_C","")); r[3].text = str(row.get("vibration_mm_s",""))
-                r[4].text = str(round(row.get("anomaly_score", 0), 3))
+                r[4].text = str(row.get("rca", "Unknown"))
 
     if chat_history:
         doc.add_heading("AI Diagnostic Chat Log", level=1)

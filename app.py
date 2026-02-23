@@ -269,7 +269,7 @@ with tab2:
         st.markdown('<div class="sec-header">🔴 Flagged Anomaly Records</div>', unsafe_allow_html=True)
         anom_df = df_analyzed[df_analyzed["anomaly_flag"]==True][[
             "timestamp","machine_id","temperature_C","vibration_mm_s",
-            "pressure_bar","status","anomaly_score","anomaly_label"
+            "rca","status","anomaly_score"
         ]].sort_values("anomaly_score", ascending=False)
         st.dataframe(anom_df, use_container_width=True, height=280)
 
