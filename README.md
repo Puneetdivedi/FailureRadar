@@ -79,7 +79,13 @@ ollama pull llama3.2    # or: mistral, gemma2, phi3
 python src/ingest.py
 ```
 
-### 4. Launch the App
+### 4. Start the Watchdog (Optional)
+```bash
+python src/watchdog_service.py
+```
+This will automatically rebuild the index whenever `sensor_logs.csv` is updated.
+
+### 5. Launch the App
 ```bash
 streamlit run app.py
 ```
@@ -136,6 +142,7 @@ Then re-run `python src/ingest.py` to rebuild the index.
 | LLM | Ollama (local) | 100% private, no API costs |
 | Chunking | Row-level + machine summaries | Enables both specific and aggregate queries |
 | RCA Engine | Rule-based Heuristics | Fast, explainable diagnoses of detected anomalies |
+| Watchdog | Real-time CSV monitoring | Automatic vector store sync on file modification |
 | Temperature | 0.2 | Low = factual, deterministic diagnostics |
 
 ---
@@ -153,6 +160,7 @@ Then re-run `python src/ingest.py` to rebuild the index.
 ## 🚀 Possible Extensions
 
 - [x] Add Heuristic Root Cause Analysis (RCA)
+- [x] Implement real-time CSV streaming with watchdog
 - [ ] Add LangChain for multi-step agent reasoning
 - [ ] Integrate MLflow anomaly detection model for hybrid ML+RAG
 - [ ] Export auto-generated RCA reports as PDF/DOCX
