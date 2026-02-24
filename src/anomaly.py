@@ -84,6 +84,28 @@ def calculate_health_score(anomaly_rate: float, max_score: float) -> float:
     return max(0.0, round(score, 1))
 
 
+def get_maintenance_recommendations(summary: dict) -> list:
+    """
+    Rank equipment repairs based on health scores.
+    """
+    recommendations = []
+    for machine, stats in summary.items():
+        score = stats["health_score"]
+        if score < 100:
+            priority = "🚨 HIGH" if score < 50 else "⚠️ MEDIUM" if score < 85 else "ℹ️ LOW"
+            action = "Immediate Inspection Required" if score < 50 else "Schedule Service" if score < 85 else "Monitor Performance"
+            recommendations.append({
+                "machine": machine,
+                "health": f"{score}%",
+                "priority": priority,
+                "action": action,
+                "reason": f"{stats['anomalies']} anomalies detected (Max Score: {stats['max_score']})"
+            })
+    
+    # Sort by health score ascending (worst health first)
+    return sorted(recommendations, key=lambda x: float(x["health"].replace("%", "")))
+
+
 def get_anomaly_summary(df: pd.DataFrame) -> dict:
     if "anomaly_flag" not in df.columns:
         return {}

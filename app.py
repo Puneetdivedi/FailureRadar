@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from src.retriever import Retriever
 from src.llm       import ask_ollama, build_rag_prompt
-from src.anomaly   import run_anomaly_detection, get_anomaly_summary
+from src.anomaly   import run_anomaly_detection, get_anomaly_summary, get_maintenance_recommendations
 from src.report    import generate_pdf_report, generate_docx_report
 
 # ── Page Config ───────────────────────────────────────────────────────────────
@@ -273,6 +273,13 @@ with tab2:
         ]].sort_values("anomaly_score", ascending=False)
         st.dataframe(anom_df, use_container_width=True, height=280)
 
+        st.markdown('<div class="sec-header">🛠️ Maintenance Priority Schedule</div>', unsafe_allow_html=True)
+        recommendations = get_maintenance_recommendations(anomaly_summary)
+        if recommendations:
+            st.dataframe(pd.DataFrame(recommendations), use_container_width=True)
+        else:
+            st.success("✅ All equipment operating within normal health ranges.")
+
 
 # ── Tab 3: AI Diagnostics ─────────────────────────────────────────────────────
 with tab3:
@@ -309,13 +316,25 @@ with tab3:
     if send and user_input.strip() and retriever:
         q = user_input.strip()
         st.session_state.messages.append({"role":"user","content":q})
-        with st.spinner("🔎 Retrieving sensor context... 🧠 Generating diagnosis..."):
+        
+        # Display the user message immediately
+        st.rerun()
+
+    # Handle the AI response generation if the last message is from the user
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+        q = st.session_state.messages[-1]["content"]
+        with st.spinner("🔎 Retrieving sensor context..."):
             docs    = retriever.retrieve(q, top_k=top_k)
             context = retriever.format_context(docs)
             prompt  = build_rag_prompt(q, context)
-            answer  = ask_ollama(prompt, model=ollama_model)
+            
+        with st.chat_message("assistant", avatar="🎯"):
+            st.markdown("**FailureRadar AI Analysis:**")
+            response_generator = ask_ollama(prompt, model=ollama_model, stream=True)
+            full_response = st.write_stream(response_generator)
+            
         st.session_state.messages.append({
-            "role":"assistant","content":answer,
+            "role":"assistant","content":full_response,
             "context":context.replace("\n","<br>")
         })
         st.rerun()

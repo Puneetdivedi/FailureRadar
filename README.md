@@ -143,6 +143,8 @@ Then re-run `python src/ingest.py` to rebuild the index.
 | Chunking | Row-level + machine summaries | Enables both specific and aggregate queries |
 | RCA Engine | Rule-based Heuristics | Fast, explainable diagnoses of detected anomalies |
 | Watchdog | Real-time CSV monitoring | Automatic vector store sync on file modification |
+| Streaming | AI Chat Streaming | Real-time diagnostics for a smoother UX |
+| Scheduler | Maintenance Engine | Health-based prioritization of equipment repairs |
 | Temperature | 0.2 | Low = factual, deterministic diagnostics |
 
 ---
@@ -161,6 +163,8 @@ Then re-run `python src/ingest.py` to rebuild the index.
 
 - [x] Add Heuristic Root Cause Analysis (RCA)
 - [x] Implement real-time CSV streaming with watchdog
+- [x] Add Maintenance Recommendation Engine
+- [x] Enable AI Chat Response Streaming
 - [ ] Add LangChain for multi-step agent reasoning
 - [ ] Integrate MLflow anomaly detection model for hybrid ML+RAG
 - [ ] Export auto-generated RCA reports as PDF/DOCX
