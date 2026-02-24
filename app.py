@@ -362,7 +362,7 @@ with tab4:
         st.markdown("Formatted report with tables and colour-coded sections.")
         if st.button("⬇️ Generate PDF", use_container_width=True):
             with st.spinner("Building PDF..."):
-                pdf_bytes = generate_pdf_report(messages, df, df_analyzed if "anomaly_flag" in df_analyzed.columns else None)
+                pdf_bytes = generate_pdf_report(messages, df, df_analyzed if "anomaly_flag" in df_analyzed.columns else None, anomaly_summary)
             if pdf_bytes:
                 st.download_button("💾 Download PDF", data=pdf_bytes,
                     file_name=f"FailureRadar_{ts}.pdf", mime="application/pdf",
@@ -375,7 +375,7 @@ with tab4:
         st.markdown("Editable DOCX report you can share with your team.")
         if st.button("⬇️ Generate DOCX", use_container_width=True):
             with st.spinner("Building DOCX..."):
-                docx_bytes = generate_docx_report(messages, df, df_analyzed if "anomaly_flag" in df_analyzed.columns else None)
+                docx_bytes = generate_docx_report(messages, df, df_analyzed if "anomaly_flag" in df_analyzed.columns else None, anomaly_summary)
             if docx_bytes:
                 st.download_button("💾 Download DOCX", data=docx_bytes,
                     file_name=f"FailureRadar_{ts}.docx",

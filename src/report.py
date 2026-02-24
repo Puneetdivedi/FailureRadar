@@ -7,7 +7,7 @@ import datetime
 import pandas as pd
 
 
-def generate_pdf_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.DataFrame = None) -> bytes:
+def generate_pdf_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.DataFrame = None, anomaly_summary: dict = None) -> bytes:
     try:
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -80,6 +80,27 @@ def generate_pdf_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.Dat
             story.append(t2)
         story.append(Spacer(1, 0.5*cm))
 
+    if anomaly_summary:
+        from src.anomaly import get_maintenance_recommendations
+        recs = get_maintenance_recommendations(anomaly_summary)
+        if recs:
+            story.append(Paragraph("Maintenance Priority Schedule", styles["Heading2"]))
+            m_data = [["Machine", "Health", "Priority", "Recommended Action"]]
+            for r in recs:
+                m_data.append([r["machine"], r["health"], r["priority"], r["action"]])
+            
+            tm = Table(m_data, colWidths=[3.5*cm, 2.5*cm, 3*cm, 7*cm])
+            tm.setStyle(TableStyle([
+                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#0f3460")),
+                ("TEXTCOLOR",  (0,0), (-1,0), colors.white),
+                ("FONTNAME",   (0,0), (-1,0), "Helvetica-Bold"),
+                ("GRID",       (0,0), (-1,-1), 0.5, colors.HexColor("#dddddd")),
+                ("FONTSIZE",   (0,0), (-1,-1), 9),
+                ("PADDING",    (0,0), (-1,-1), 6),
+            ]))
+            story.append(tm)
+            story.append(Spacer(1, 0.5*cm))
+
     if chat_history:
         story.append(Paragraph("AI Diagnostic Chat Log", styles["Heading2"]))
         q_style = ParagraphStyle("Q", parent=styles["Normal"], textColor=colors.HexColor("#0f3460"), fontName="Helvetica-Bold", fontSize=10, spaceAfter=4)
@@ -97,7 +118,7 @@ def generate_pdf_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.Dat
     return buffer.getvalue()
 
 
-def generate_docx_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.DataFrame = None) -> bytes:
+def generate_docx_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.DataFrame = None, anomaly_summary: dict = None) -> bytes:
     try:
         from docx import Document
         from docx.shared import RGBColor, Inches
@@ -148,6 +169,22 @@ def generate_docx_report(chat_history: list, df: pd.DataFrame, anomaly_df: pd.Da
                 r[0].text = str(row.get("machine_id",""));  r[1].text = str(row.get("timestamp",""))
                 r[2].text = str(row.get("temperature_C","")); r[3].text = str(row.get("vibration_mm_s",""))
                 r[4].text = str(row.get("rca", "Unknown"))
+
+    if anomaly_summary:
+        from src.anomaly import get_maintenance_recommendations
+        recs = get_maintenance_recommendations(anomaly_summary)
+        if recs:
+            doc.add_heading("Maintenance Priority Schedule", level=1)
+            mtbl = doc.add_table(rows=1, cols=4)
+            mtbl.style = "Table Grid"
+            for i, h in enumerate(["Machine", "Health", "Priority", "Recommended Action"]):
+                mtbl.rows[0].cells[i].text = h
+            for r in recs:
+                row_cells = mtbl.add_row().cells
+                row_cells[0].text = r["machine"]
+                row_cells[1].text = r["health"]
+                row_cells[2].text = r["priority"]
+                row_cells[3].text = r["action"]
 
     if chat_history:
         doc.add_heading("AI Diagnostic Chat Log", level=1)
